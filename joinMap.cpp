@@ -86,8 +86,8 @@ int main( int argc, char** argv )
                        
             cout << "Converting image NO." << count_num << endl; 
                             
-            for ( int v=0; v<color.rows; v++ ){         	
-                for ( int u=0; u<color.cols; u++ ){
+            for ( int v=0; v<color_undist.rows; v++ ){         	
+                for ( int u=0; u<color_undist.cols; u++ ){
                     
                     if( u%10!=0 || v%10!=0 ){
                         continue;  // reduce point cloud size, which increase the 3d drawing process
