@@ -6,16 +6,17 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
 #include <Eigen/Geometry> 
-#include <boost/format.hpp>  // for formating strings
+
 
 using namespace std;
+using namespace cv;
 
-bool readYaml( cv::Mat& cameraMatrix, cv::Mat& distCoeffs );
+bool readYaml( Mat& cameraMatrix, Mat& distCoeffs );
 
 int main( int argc, char** argv )
 {
-    cv::Mat color, color_undist, depth;    // rgb and depth images
-    cv::Mat cameraMatrix, distCoeffs;
+    Mat color, color_undist, depth;    // rgb and depth images
+    Mat cameraMatrix, distCoeffs;
     bool state;
     
     if ( argc != 2 )
@@ -69,9 +70,9 @@ int main( int argc, char** argv )
         if(!fin.fail()){
             count_num++;
 
-            color = cv::imread( path_to_dataset+"/"+rgb_file );
-            cv::undistort( color, color_undist, cameraMatrix, distCoeffs, cv::getOptimalNewCameraMatrix(cameraMatrix, distCoeffs, color.size(), 0, color.size() ) );
-            depth = cv::imread( path_to_dataset+"/"+depth_file, -1 ); // use -1 to read original image
+            color = imread( path_to_dataset+"/"+rgb_file );
+            undistort( color, color_undist, cameraMatrix, distCoeffs, getOptimalNewCameraMatrix(cameraMatrix, distCoeffs, color.size(), 0, color.size() ) );
+            depth = imread( path_to_dataset+"/"+depth_file, -1 ); // use -1 to read original image
             // convert string to double (pose)
             data[0] = stod(tx);
             data[1] = stod(ty);
@@ -89,7 +90,7 @@ int main( int argc, char** argv )
             for ( int v=0; v<color_undist.rows; v++ ){         	
                 for ( int u=0; u<color_undist.cols; u++ ){
                     
-                    if( u%10!=0 || v%10!=0 ){
+                    if( u%5!=0 || v%5!=0 || count_num%5!=0 ){
                         continue;  // reduce point cloud size, which increase the 3d drawing process
                     }
                     index = v*color.cols+u;
@@ -124,9 +125,9 @@ int main( int argc, char** argv )
 
     cout << "There are total number of " << count_num << " data" << endl;
 
-    cv::imshow("Original image", color);
-    cv::imshow("Undistortion image", color_undist);
-    cv::waitKey(0);
+    imshow("Original image", color);
+    imshow("Undistortion image", color_undist);
+    waitKey(0);
 
     fin.close();
 	outFile.close();
@@ -137,9 +138,9 @@ int main( int argc, char** argv )
 }
 
 
-bool readYaml( cv::Mat& cameraMatrix, cv::Mat& distCoeffs ) {
+bool readYaml( Mat& cameraMatrix, Mat& distCoeffs ) {
     std::string filename = "../camera_calibration_parameters.yaml";
-    cv::FileStorage fs(filename, cv::FileStorage::READ);
+    FileStorage fs(filename, FileStorage::READ);
     if (!fs.isOpened()) {
         cout << "failed to open file " << filename << endl;
         return false;
