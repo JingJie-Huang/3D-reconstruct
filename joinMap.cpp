@@ -117,7 +117,7 @@ int main( int argc, char** argv )
                     r = (float) (r_raw/255.0);
                     
                     // Open3D Point clud format xyzrgb, where rgb is float format
-                    outFile << x <<"  "<< y << "  " << z << "  " << r <<"  " << g << "  " << b << endl;
+                    outFile << x <<" "<< y << " " << z << " " << r <<" " << g << " " << b << endl;
                 }
             }                                   
         }        
