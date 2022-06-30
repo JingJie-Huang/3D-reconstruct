@@ -6,6 +6,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
 #include <Eigen/Geometry>
+#include <octomap/octomap.h>
 
 using namespace std;
 using namespace cv;
@@ -42,8 +43,6 @@ int main(int argc, char **argv)
     string tx, ty, tz, qx, qy, qz, qw;
     double data[7] = {0}; // store quaternion
     int count_num = 0;
-    int r_raw, g_raw, b_raw;
-    float x, y, z, r, g, b;
     unsigned int index;
 
     // Intrinsic matrix
@@ -57,9 +56,8 @@ int main(int argc, char **argv)
     double fy = cameraMatrix.at<double>(1, 1);
     double depthScale = 5000.0;
 
-    // store point cloud data in .txt format
-    ofstream outFile;
-    outFile.open("pointcloud.txt");
+    // octomap
+    octomap::OcTree tree(0.02);
 
     while (!fin.eof())
     {
@@ -83,6 +81,7 @@ int main(int argc, char **argv)
             Eigen::Quaterniond q(data[6], data[3], data[4], data[5]);
             Eigen::Isometry3d T(q);
             T.pretranslate(Eigen::Vector3d(data[0], data[1], data[2]));
+            octomap::Pointcloud cloud; // the point cloud in octomap
 
             cout << "Converting image NO." << count_num << endl;
 
@@ -106,35 +105,23 @@ int main(int argc, char **argv)
                     point[1] = (v - cy) * point[2] / fy;
                     Eigen::Vector3d pointWorld = T * point;
 
-                    x = pointWorld[0];
-                    y = pointWorld[1];
-                    z = pointWorld[2];
-                    // b_raw, g_raw, r_raw are integer in [0,255]
-                    b_raw = (int)color.data[3 * index + 0];
-                    g_raw = (int)color.data[3 * index + 1];
-                    r_raw = (int)color.data[3 * index + 2];
-                    // b, g, r are float in [0,1]
-
-                    b = (float)(b_raw / 255.0);
-                    g = (float)(g_raw / 255.0);
-                    r = (float)(r_raw / 255.0);
-
-                    // Open3D Point clud format xyzrgb, where rgb is float format
-                    outFile << x << " " << y << " " << z << " " << r << " " << g << " " << b << endl;
+                    cloud.push_back(pointWorld[0], pointWorld[1], pointWorld[2]);
                 }
             }
+            tree.insertPointCloud(cloud, octomap::point3d(T(0,3), T(1,3), T(2,3)));
         }
     }
 
     cout << "There are total number of " << count_num << " data" << endl;
+    tree.updateInnerOccupancy();
+    cout<<"saving octomap ... "<<endl;
+    tree.writeBinary( "octomap.bt" );
 
     imshow("Original image", color);
     imshow("Undistortion image", color_undist);
     waitKey(0);
 
     fin.close();
-    outFile.close();
-    cout << " --- Finish generation of point cloud ---" << endl;
 
     return 0;
 }
